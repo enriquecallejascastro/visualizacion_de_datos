@@ -1,0 +1,75 @@
+---
+title: "Spiral chart"
+output: html_document
+date: "2022-11-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+# Importamos las librerías necesarias.
+if (!require("spiralize")) install.packages("spiralize")
+library("spiralize")
+```
+
+
+```{r}
+# Cargamos los datos.
+covid <- read.csv("owid-covid-data.csv", stringsAsFactors = FALSE)
+covid
+```
+
+
+```{r}
+# Creamos el dataframe con los datos de España.
+spain <- covid[covid$location == "Spain" & !is.na(covid$new_cases_smoothed),]
+spain$dt <- strptime(spain$date, format="%Y-%m-%d")
+ymax <- max(spain$new_cases_smoothed)
+
+spain
+```
+
+
+```{r, warning=FALSE}
+# Creamos la figura.
+# Código extraído de 
+# https://flowingdata.com/2022/01/10/a-quick-and-easy-way-to-make-spiral-charts-in-r/
+
+# Initialize.
+spiral_initialize_by_time(xlim=c("2020-01-01 00:00:00", "2022-10-01 00:00:00"),
+                          unit_on_axis = "days", period="years",
+                          start=90, end=(709/365)*360+(28/365)*360+90,
+                          flip="horizontal")
+
+
+# Create the track.
+spiral_track(ylim=c(0, ymax*.7),
+             background=FALSE, background_gp = gpar(col = NA, fill = NA))
+
+
+# Use a polygon.
+spiral_polygon(x=c(spain$dt, rev(spain$dt)),
+               y=c(spain$new_cases_smoothed/2, -rev(spain$new_cases_smoothed/2)),
+               gp = gpar(col="#d32e2b", fill="#d32e2b50"))
+
+
+# Middle baseline.
+spiral_lines(x=spain$dt, y=0)
+
+
+# Text.
+spiral_text(x="2020-01-01", y=50000, text="2020",
+            just = "right",
+            gp=gpar(cex=1, fontfamily="Courier"))
+spiral_text(x="2021-01-01", y=50000, text="2021",
+            just = "right",
+            gp=gpar(cex=1, fontfamily="Courier"))
+spiral_text(x="2022-01-01", y=50000, text="2022",
+            just = "right",
+            gp=gpar(cex=1, fontfamily="Courier"))
+```
+
